@@ -356,3 +356,37 @@ input:focus, textarea:focus { outline: 1px solid var(--mint); outline-offset: 0;
 @media (prefers-reduced-motion: reduce) {
   #once-panel, #once-toggle { animation: none; transition: none; }
 }
+
+@media (max-width: 767px) {
+  .hero-inner { min-height: clamp(22rem, 54svh, 29rem); gap: 1.3rem; padding-block: 1.8rem .8rem; }
+  .hero-copy { text-align: left; }
+  .hero h1 { font-size: clamp(2.1rem, 7.6vw, 3.35rem); }
+  .hero-text { margin-inline: 0; max-width: 30ch; font-size: .94rem; line-height: 1.42; }
+  .hero-cta { margin-top: .8rem; padding: .6em 1em; }
+  .feature-name { font-size: .875rem; }
+  .catalog { padding-block: 1.65rem 2rem; }
+  .catalog-head { gap: .65rem; }
+  .catalog-head h2, .plan h2 { font-size: clamp(1.65rem, 5.8vw, 2.25rem); }
+  .catalog-tools { gap: .4rem; margin-block: .75rem .55rem; }
+  .filters { width: 100%; min-width: 0; flex-wrap: nowrap; overflow-x: auto; padding: .15rem; scrollbar-width: thin; }
+  .filters button { flex: none; font-size: .78rem; }
+  .results-bar { width: 100%; justify-content: space-between; }
+  .grid { gap: .65rem; }
+  .grid.shelf { grid-auto-columns: 86%; }
+  .cover { aspect-ratio: 2.35; }
+  .area-tag { left: .35rem; bottom: .35rem; max-width: calc(100% - .7rem); gap: .25rem; padding: .15rem .33rem; font-size: .69rem; line-height: 1.2; }
+  .area-tag i { flex: none; }
+  .course-body { padding: .65rem; }
+  .course-meta { gap: .25rem; font-size: .73rem; }
+  .course-meta > span:first-child, .course-meta i { display: none; }
+  .course h3 { margin: .4rem 0; font-size: clamp(1rem, 3.8vw, 1.25rem); line-height: 1.16; overflow-wrap: anywhere; }
+  .course-body p { font-size: .825rem; line-height: 1.42; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+  .card-actions { display: grid; gap: .2rem; padding-top: .6rem; }
+  .card-actions .button { min-height: 44px; padding: .35rem; gap: .3rem; font-size: .8rem; }
+  .plan-panel { padding: 1rem; gap: 1rem; }
+  .plan-intro p:not(.kicker) { font-size: .93rem; }
+}
+@media (min-width: 360px) and (max-width: 767px) {
+  .grid:not(.shelf) { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid.shelf { grid-auto-columns: calc((100% - .65rem) / 2); }
+}
