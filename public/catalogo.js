@@ -288,6 +288,7 @@ function renderInquiry() {
   byId('compose').hidden = finished;
   byId('receipt').hidden = !finished;
   byId('fields').disabled = pending;
+  byId('fields').hidden = pending;
   byId('submit').disabled = pending || finished;
   byId('submit').classList.toggle('is-sending', pending);
   form.setAttribute('aria-busy', String(pending));
@@ -297,8 +298,8 @@ function renderInquiry() {
   byId('form-error').querySelector('span').textContent = failed ? entry.error : '';
   byId('form-status').textContent = pending ? 'Enviando solicitud…' : '';
   if (finished) {
-    byId('receipt-heading').textContent = 'Solicitud enviada';
-    byId('receipt-text').textContent = 'FormSubmit aceptó tu solicitud para enviarla a admisiones. El equipo podrá responderte en ' + entry.values.email + '.';
+    byId('receipt-heading').textContent = 'Enviado';
+    byId('receipt-text').textContent = 'Tu solicitud se envió a admisiones. Te responderemos a ' + entry.values.email + '.';
     byId('receipt-heading').focus({preventScroll: true});
   } else { showStep(entry.step); }
 }
@@ -443,8 +444,8 @@ form.addEventListener('submit', async event => {
     }
   } catch (error) {
     entry.phase = 'error';
-    entry.error = error.name === 'AbortError' ? 'FormSubmit tardó en responder. No se pudo confirmar la recepción.'
-      : error instanceof TypeError ? 'Revisa tu conexión. FormSubmit no confirmó el envío.' : error.message;
+    entry.error = error.name === 'AbortError' ? 'La confirmación tardó en llegar. Consulta con admisiones antes de reenviar.'
+      : error instanceof TypeError ? 'Revisa tu conexión. No pudimos confirmar el envío.' : error.message;
   }
   if (activeProgram === id && dialog.open) renderInquiry();
 });
