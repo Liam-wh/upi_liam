@@ -142,7 +142,7 @@ filterCatalog('');
 // Solicitudes por programa: los borradores viven sólo en la memoria de esta pestaña.
 const dialog = byId('consulta');
 const form = byId('lead');
-const recipient = document.body.dataset.recipient;
+const formId = document.body.dataset.formId;
 const field = name => form.elements.namedItem(name);
 const inputNames = ['name','ci','email','sede','asesor','perfil','certificacion','pago','fecha_pago','monto','comprobante','message'];
 const inquiries = new Map();
@@ -298,7 +298,7 @@ function renderInquiry() {
   byId('form-status').textContent = pending ? 'Enviando solicitud…' : '';
   if (finished) {
     byId('receipt-heading').textContent = 'Solicitud enviada';
-    byId('receipt-text').textContent = 'FormSubmit aceptó tu solicitud para enviarla a ' + recipient + '. Admisiones podrá responderte en ' + entry.values.email + '.';
+    byId('receipt-text').textContent = 'FormSubmit aceptó tu solicitud para enviarla a admisiones. El equipo podrá responderte en ' + entry.values.email + '.';
     byId('receipt-heading').focus({preventScroll: true});
   } else { showStep(entry.step); }
 }
@@ -363,7 +363,7 @@ function submitToProvider(fields, file) {
   outgoing.hidden = true;
   outgoing.method = 'POST';
   outgoing.enctype = 'multipart/form-data';
-  outgoing.action = 'https://formsubmit.co/' + recipient;
+  outgoing.action = 'https://formsubmit.co/' + formId;
   for (const [key,value] of Object.entries(fields)) {
     const input = document.createElement('input');
     input.type = 'hidden'; input.name = key; input.value = value;
@@ -392,9 +392,9 @@ window.addEventListener('pageshow', event => {
 });
 async function deliver(data) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 22000);
+  const timeout = setTimeout(() => controller.abort(), 37000);
   try {
-    const response = await fetch('/consulta', {method:'POST',body:data,headers:{Accept:'application/json'},signal:controller.signal});
+    const response = await fetch(preview ? new URL('/consulta', document.body.dataset.formUrl) : '/consulta', {method:'POST',body:data,headers:{Accept:'application/json'},signal:controller.signal});
     const result = await response.json().catch(() => null);
     if (result?.status === 'activation_pending') return 'activation';
     if (response.ok && result?.status === 'accepted') return 'accepted';
@@ -424,7 +424,7 @@ form.addEventListener('submit', async event => {
   renderInquiry();
   try {
     // En el HTML descargable y en los envíos con imagen usamos el formulario oficial de FormSubmit.
-    if (preview || proof?.size) {
+    if (formId) {
       const fields = providerFields(data, programs.get(id).dataset.title);
       const image = proof?.size ? await checkedProof(proof) : null;
       const outgoing = submitToProvider(fields, image);

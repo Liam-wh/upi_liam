@@ -3,7 +3,8 @@ import os
 import re
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
@@ -24,16 +25,26 @@ if not os.environ.get("GEMINI_API_KEY") and env_local.is_file():
 app = Flask(__name__, static_folder="public", static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = LIMITE_IMAGEN + 65536
 app.register_blueprint(once)
-FORMSUBMIT = "https://formsubmit.co/ajax/" + DESTINATARIO
+FORMSUBMIT = "https://formsubmit.co/" + DESTINATARIO
+
+
+class SinRedireccion(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def form_id_publico():
+    valor = os.getenv("FORMSUBMIT_ID", "").strip()
+    return valor if re.fullmatch(r"[a-zA-Z0-9_-]{12,120}", valor) else ""
 
 
 def catalogo(*, completo=False, muestra=False):
     telefono = re.sub(r"\D", "", os.getenv("WHATSAPP_NUMBER") or "59163257678")
     return render_template(
         "editorial.html", completo=completo, muestra=muestra, telefono=telefono,
-        destinatario=DESTINATARIO, certificados=CERTIFICACION,
+        form_id=form_id_publico(), certificados=CERTIFICACION,
         temas=TEMAS, gemini_activo=not muestra and bool(os.getenv("GEMINI_API_KEY", "").strip()),
-        form_url=os.getenv("PUBLIC_SITE_URL") or request.url_root,
+        form_url=os.getenv("PUBLIC_SITE_URL") or ("https://upiliam.vercel.app/" if muestra else request.url_root),
         programas=DESTACADOS + RESTO, slides=SLIDES, areas=AREAS,
         areas_portada=AREAS_PORTADA, destacados=DESTACADOS,
     )
@@ -51,12 +62,17 @@ def home():
 
 @app.get("/activar-correo")
 def activar_correo():
-    return render_template("activar.html", destinatario=DESTINATARIO, origen=request.url_root)
+    return render_template("activar.html", origen=request.url_root)
+
+
+@app.post("/activar-correo")
+def solicitar_activacion():
+    return enviar_formulario({"Motivo": "Verificación del formulario de admisiones."})
 
 
 @app.get("/solicitud-recibida")
 def recibida():
-    return render_template("recibida.html", destinatario=DESTINATARIO)
+    return render_template("recibida.html")
 
 
 @app.get("/qr-titulaciones/descargar")
@@ -72,7 +88,7 @@ def respuesta_proveedor(data, http_ok):
             return jsonify(status="activation_pending", message="FormSubmit solicita verificar esta dirección del formulario. Puedes comunicarlo a admisiones por WhatsApp."), 202
         if http_ok and str(data.get("success", "")).lower() == "true":
             return jsonify(status="accepted", message="FormSubmit aceptó la solicitud para su envío.")
-    return jsonify(status="unconfirmed", message="FormSubmit no confirmó la recepción. Conservamos los campos para que puedas revisar o reintentar la solicitud."), 502
+    return jsonify(status="unconfirmed", message="Todavía no tenemos confirmación de tu solicitud. Tus datos siguen en el formulario. Consulta con admisiones antes de reenviar."), 502
 
 
 @app.post("/consulta")
@@ -84,10 +100,9 @@ def inquiry():
     except ValueError as error:
         return jsonify(message=str(error)), 400
 
-    origen = os.getenv("PUBLIC_SITE_URL") or request.url_root
     payload = {
         **mensaje["campos"], "email": mensaje["reply_to"], "_subject": mensaje["subject"],
-        "_template": "table", "_url": origen,
+        "_template": "table",
     }
     referencia = form.get("intento", "")
     if re.fullmatch(r"[a-f0-9-]{36}", referencia):
@@ -96,24 +111,38 @@ def inquiry():
         payload["Comprobante"] = "Imagen adjunta"
         if not form.get("comprobante"):
             payload.pop("Enlace al comprobante", None)
-        body, tipo = multipart(payload, adjunto)
-    else:
-        body, tipo = json.dumps(payload).encode(), "application/json"
-    req = Request(
-        FORMSUBMIT, data=body,
-        headers={"Content-Type": tipo, "Accept": "application/json",
-                 "User-Agent": "UPI-Alumni/1.0", "Referer": origen},
-    )
+    return enviar_formulario(payload, adjunto)
+
+
+@app.after_request
+def permitir_catalogo_descargado(response):
+    if request.path == "/consulta" and request.headers.get("Origin") == "null":
+        response.headers["Access-Control-Allow-Origin"] = "null"
+        response.vary.add("Origin")
+    return response
+
+
+def enviar_formulario(payload, adjunto=None):
+    origen = os.getenv("PUBLIC_SITE_URL") or request.url_root
+    recibo = origen.rstrip("/") + "/solicitud-recibida"
+    payload.update(_url=origen, _next=recibo, _captcha="false")
+    body, tipo = multipart(payload, adjunto) if adjunto else (urlencode(payload).encode(), "application/x-www-form-urlencoded")
+    req = Request(FORMSUBMIT, data=body, headers={"Content-Type": tipo, "Referer": origen})
     try:
-        with urlopen(req, timeout=14) as response:
-            return respuesta_proveedor(json.load(response), True)
+        with build_opener(SinRedireccion()).open(req, timeout=28) as response:
+            if response.headers.get_content_type() == "application/json":
+                return respuesta_proveedor(json.load(response), True)
+            html = response.read(120000).decode("utf-8", "replace").lower()
+            if "confirm your email" in html or "check your email to activate" in html:
+                return respuesta_proveedor({"message": "activate"}, False)
     except HTTPError as error:
-        try:
-            return respuesta_proveedor(json.load(error), False)
-        except (ValueError, OSError):
-            return respuesta_proveedor(None, False)
+        with error:
+            if error.code in (302, 303) and error.headers.get("Location") == recibo:
+                return respuesta_proveedor({"success": True}, True)
+            app.logger.warning("FormSubmit HTTP %s", error.code)
     except (URLError, OSError, ValueError):
-        return respuesta_proveedor(None, False)
+        app.logger.warning("FormSubmit sin respuesta confirmada")
+    return respuesta_proveedor(None, False)
 
 
 if __name__ == "__main__":

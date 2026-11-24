@@ -10,8 +10,8 @@
   <main class="wrap activation">
     <p class="kicker">Administración del formulario</p>
     <h1>Activar correo de admisiones</h1>
-    <p>Envía una solicitud de activación desde esta dirección web. Revisa la bandeja de entrada y Spam de <strong>{{ destinatario }}</strong> y pulsa «Activate Form» en el correo de FormSubmit.</p>
-    <form method="post" action="https://formsubmit.co/{{ destinatario }}">
+    <p>Envía una solicitud de activación desde esta dirección web. Revisa la bandeja de entrada y Spam de la cuenta de admisiones y pulsa «Activate Form» en el correo de FormSubmit.</p>
+    <form method="post" action="/activar-correo">
       <input type="hidden" name="_subject" value="Activación del formulario de inscripción UPI Alumni">
       <input type="hidden" name="_url" value="{{ origen }}">
       <input type="hidden" name="Motivo" value="Activación solicitada por la administración de UPI Alumni. Prueba técnica sin datos de participantes.">
