@@ -304,6 +304,13 @@ function renderInquiry() {
   } else { showStep(entry.step); }
 }
 function openInquiry(button) {
+  if (!document.getElementById('admissions-preconnect')) {
+    const link = document.createElement('link');
+    link.id = 'admissions-preconnect';
+    link.rel = 'preconnect';
+    link.href = 'https://formsubmit.co';
+    document.head.append(link);
+  }
   const id = button.dataset.open;
   const card = programs.get(id);
   if (!card) return;
@@ -357,14 +364,21 @@ byId('continue').addEventListener('click', () => {
 byId('back-step').addEventListener('click', () => showStep(1, true));
 form.addEventListener('input', event => event.target.setCustomValidity?.(''));
 form.addEventListener('change', syncPayment);
-function submitToProvider(fields, file, endpointId) {
+function submitAttachment(fields, file, endpointId) {
   // El POST nativo permite adjuntar el binario y completar la confirmación del proveedor en el navegador.
   const outgoing = document.createElement('form');
-  outgoing.className = 'provider-post';
   outgoing.hidden = true;
   outgoing.method = 'POST';
   outgoing.enctype = 'multipart/form-data';
   outgoing.action = 'https://formsubmit.co/' + endpointId;
+  const frame = document.createElement('iframe');
+  frame.hidden = true;
+  const token = crypto.randomUUID();
+  frame.name = 'recepcion-' + token;
+  outgoing.target = frame.name;
+  const callback = new URL('/confirmacion-formulario.html', fields._next);
+  callback.hash = token;
+  fields._next = callback.href;
   for (const [key,value] of Object.entries(fields)) {
     const input = document.createElement('input');
     input.type = 'hidden'; input.name = key; input.value = value;
@@ -378,19 +392,47 @@ function submitToProvider(fields, file, endpointId) {
     upload.files = transfer.files;
     outgoing.append(upload);
   }
-  document.body.append(outgoing);
-  HTMLFormElement.prototype.submit.call(outgoing);
-  return outgoing;
+  return new Promise((resolve, reject) => {
+    function cleanup() {
+      clearTimeout(timer);
+      window.removeEventListener('message', receive);
+      outgoing.remove();
+      frame.remove();
+    }
+    function receive(event) {
+      if (event.origin !== callback.origin || event.source !== frame.contentWindow ||
+          event.data?.formsubmitReceipt !== token) return;
+      cleanup();
+      resolve();
+    }
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Falta la confirmación del envío. Consulta con admisiones antes de reenviar.'));
+    }, 90000);
+    window.addEventListener('message', receive);
+    try {
+      document.body.append(frame, outgoing);
+      HTMLFormElement.prototype.submit.call(outgoing);
+    } catch (error) { cleanup(); reject(error); }
+  });
 }
-window.addEventListener('pageshow', event => {
-  if (event.persisted) document.querySelectorAll('.provider-post').forEach(el => el.remove());
-  if (event.persisted && activeProgram && inquiryFor(activeProgram).phase === 'sending') {
-    const entry = inquiryFor(activeProgram);
-    entry.phase = 'error';
-    entry.error = 'Has vuelto al formulario. Revisa la respuesta de FormSubmit antes de volver a enviar.';
-    renderInquiry();
-  }
-});
+
+async function submitText(fields, endpointId) {
+  delete fields._next;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+  try {
+    const response = await fetch('https://formsubmit.co/ajax/' + endpointId, {
+      method: 'POST', headers: {Accept: 'application/json'}, body: new URLSearchParams(fields),
+      signal: controller.signal
+    });
+    const receipt = await response.json().catch(() => null);
+    if (!response.ok || String(receipt?.success).toLowerCase() !== 'true' ||
+        /activat|confirm your email|verify your email/i.test(receipt?.message || '')) {
+      throw new Error('FormSubmit no confirmó tu solicitud. Consulta con admisiones antes de reenviar.');
+    }
+  } finally { clearTimeout(timer); }
+}
 async function submissionId() {
   if (formId) return formId;
   if (preview) {
@@ -427,15 +469,9 @@ form.addEventListener('submit', async event => {
     const endpointId = await submissionId();
     const fields = providerFields(data, programs.get(id).dataset.title);
     const image = proof?.size ? await checkedProof(proof) : null;
-    const outgoing = submitToProvider(fields, image, endpointId);
-    setTimeout(() => {
-      outgoing.remove();
-      if (entry.phase !== 'sending') return;
-      entry.phase = 'error';
-      entry.error = 'Falta la confirmación de FormSubmit. Consulta con admisiones antes de reenviar tu solicitud.';
-      if (activeProgram === id && dialog.open) renderInquiry();
-    }, 45000);
-    return;
+    if (image) await submitAttachment(fields, image, endpointId);
+    else await submitText(fields, endpointId);
+    entry.phase = 'accepted';
   } catch (error) {
     entry.phase = 'error';
     entry.error = error.name === 'AbortError' ? 'La confirmación tardó en llegar. Consulta con admisiones antes de reenviar.'
