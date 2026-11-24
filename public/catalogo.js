@@ -282,7 +282,8 @@ field('attachment').addEventListener('change', () => {
 });
 function renderInquiry() {
   const entry = inquiryFor(activeProgram);
-  const finished = entry.phase === 'accepted';
+  const dispatched = entry.phase === 'dispatched';
+  const finished = dispatched || entry.phase === 'accepted';
   const pending = entry.phase === 'sending';
   const failed = entry.phase === 'error' || entry.phase === 'activation';
   byId('compose').hidden = finished;
@@ -298,8 +299,10 @@ function renderInquiry() {
   byId('form-error').querySelector('span').textContent = failed ? entry.error : '';
   byId('form-status').textContent = pending ? 'Enviando solicitud…' : '';
   if (finished) {
-    byId('receipt-heading').textContent = 'Enviado';
-    byId('receipt-text').textContent = 'Tu solicitud se envió a admisiones. Te responderemos a ' + entry.values.email + '.';
+    byId('receipt-heading').textContent = dispatched ? 'Solicitud en trámite' : 'Enviado';
+    byId('receipt-text').textContent = dispatched
+      ? 'Ya iniciamos el envío. Puedes volver al catálogo.'
+      : 'Tu solicitud se envió a admisiones. Te responderemos a ' + entry.values.email + '.';
     byId('receipt-heading').focus({preventScroll: true});
   } else { showStep(entry.step); }
 }
@@ -317,6 +320,7 @@ function openInquiry(button) {
   setMenu(false);
   opener = button;
   activeProgram = id;
+  card.querySelector('.delivery-notice')?.remove();
   const entry = inquiryFor(id);
   const title = card.dataset.title;
   byId('chosen-title').textContent = title;
@@ -423,7 +427,7 @@ async function submitText(fields, endpointId) {
   const timer = setTimeout(() => controller.abort(), 60000);
   try {
     const response = await fetch('https://formsubmit.co/ajax/' + endpointId, {
-      method: 'POST', headers: {Accept: 'application/json'}, body: new URLSearchParams(fields),
+      method: 'POST', headers: {Accept: 'application/json'}, body: new URLSearchParams(fields), keepalive: true,
       signal: controller.signal
     });
     const receipt = await response.json().catch(() => null);
@@ -469,8 +473,16 @@ form.addEventListener('submit', async event => {
     const endpointId = await submissionId();
     const fields = providerFields(data, programs.get(id).dataset.title);
     const image = proof?.size ? await checkedProof(proof) : null;
-    if (image) await submitAttachment(fields, image, endpointId);
-    else await submitText(fields, endpointId);
+    if (image) {
+      await submitAttachment(fields, image, endpointId);
+    } else {
+      const delivery = submitText(fields, endpointId);
+      if (!String(data.get('comprobante') || '').trim()) {
+        entry.phase = 'dispatched';
+        if (activeProgram === id && dialog.open) renderInquiry();
+      }
+      await delivery;
+    }
     entry.phase = 'accepted';
   } catch (error) {
     entry.phase = 'error';
@@ -478,4 +490,11 @@ form.addEventListener('submit', async event => {
       : error instanceof TypeError ? 'Revisa tu conexión. No pudimos confirmar el envío.' : error.message;
   }
   if (activeProgram === id && dialog.open) renderInquiry();
+  else if (entry.phase === 'error') {
+    const notice = document.createElement('p');
+    notice.className = 'delivery-notice';
+    notice.setAttribute('role', 'status');
+    notice.textContent = 'Envío sin confirmar. Abre «Me interesa» para revisar tu solicitud.';
+    programs.get(id).querySelector('.card-actions').before(notice);
+  }
 });
