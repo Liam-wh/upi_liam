@@ -1,10 +1,7 @@
+from pathlib import Path
 import json
 import os
 import re
-from pathlib import Path
-import smtplib
-import ssl
-from email.message import EmailMessage
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -21,7 +18,7 @@ env_local = Path(__file__).with_name(".env")
 if env_local.is_file():
     for linea in env_local.read_text(encoding="utf-8-sig").splitlines():
         nombre, separador, valor = linea.partition("=")
-        if separador and nombre.strip() in ("GEMINI_API_KEY", "GMAIL_APP_PASSWORD"):
+        if separador and nombre.strip() in ("GEMINI_API_KEY", "FORMSUBMIT_ID"):
             os.environ.setdefault(nombre.strip(), valor.strip().strip("\"'"))
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -36,16 +33,16 @@ class SinRedireccion(HTTPRedirectHandler):
 
 
 def form_id_publico():
-    valor = os.getenv("FORMSUBMIT_ID", "").strip()
+    valor = os.getenv("FORMSUBMIT_ID", "").strip() or "a8a5023d93aa3dfccf24930b78f94116"
+    valor = valor.removeprefix("https://formsubmit.co/").rstrip("/")
     return valor if re.fullmatch(r"[a-zA-Z0-9_-]{12,120}", valor) else ""
 
 
 def catalogo(*, completo=False, muestra=False):
     telefono = re.sub(r"\D", "", os.getenv("WHATSAPP_NUMBER") or "59163257678")
-    gmail_activo = bool(os.getenv("GMAIL_APP_PASSWORD", "").strip())
     return render_template(
         "editorial.html", completo=completo, muestra=muestra, telefono=telefono,
-        form_id="" if gmail_activo else form_id_publico(), gmail_activo=gmail_activo, certificados=CERTIFICACION,
+        form_id=form_id_publico(), certificados=CERTIFICACION,
         temas=TEMAS, gemini_activo=not muestra and bool(os.getenv("GEMINI_API_KEY", "").strip()),
         form_url=os.getenv("PUBLIC_SITE_URL") or ("https://diplomados.onwi.site/" if muestra else request.url_root),
         programas=DESTACADOS + RESTO, slides=SLIDES, areas=AREAS,
@@ -114,34 +111,15 @@ def inquiry():
         payload["Comprobante"] = "Imagen adjunta"
         if not form.get("comprobante"):
             payload.pop("Enlace al comprobante", None)
-    clave = os.getenv("GMAIL_APP_PASSWORD", "").replace(" ", "").strip()
-    if clave:
-        return enviar_por_gmail(payload, adjunto, clave)
     return enviar_formulario(payload, adjunto)
 
 
-def enviar_por_gmail(datos, adjunto, clave):
-    mensaje = EmailMessage()
-    mensaje["From"] = DESTINATARIO
-    mensaje["To"] = DESTINATARIO
-    mensaje["Subject"] = datos["_subject"]
-    mensaje["Reply-To"] = datos["email"]
-    mensaje.set_content("\n".join(f"{k}: {v}" for k, v in datos.items() if not k.startswith("_") and k != "email"))
-    if adjunto:
-        tipo, nombre, contenido = adjunto
-        principal, subtipo = tipo.split("/")
-        mensaje.add_attachment(contenido, maintype=principal, subtype=subtipo, filename=nombre)
-    try:
-        servidor = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=20)
-        try:
-            servidor.login(DESTINATARIO, clave)
-            servidor.send_message(mensaje)
-        finally:
-            servidor.close()
-    except (OSError, smtplib.SMTPException) as error:
-        app.logger.warning("Envio Gmail: %s codigo=%s", type(error).__name__, getattr(error, "smtp_code", None))
-        return jsonify(status="unconfirmed", message="No pudimos confirmar el envío. Tus datos siguen aquí. Puedes consultar con admisiones."), 502
-    return jsonify(status="accepted")
+@app.get("/api/formulario")
+def configuracion_formulario():
+    respuesta = jsonify(id=form_id_publico())
+    respuesta.headers["Access-Control-Allow-Origin"] = "*"
+    respuesta.headers["Cache-Control"] = "no-store"
+    return respuesta
 
 
 @app.after_request

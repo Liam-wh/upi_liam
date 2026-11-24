@@ -244,7 +244,7 @@ function providerFields(data, programTitle) {
   fields._captcha = 'false';
   fields._honey = get('website');
   fields._url = location.protocol === 'file:' ? document.body.dataset.formUrl : location.origin + location.pathname;
-  if (!preview) fields._next = location.origin + '/solicitud-recibida';
+  fields._next = new URL('/solicitud-recibida', preview ? document.body.dataset.formUrl : location.origin).href;
   if (data.get('intento')) fields['Referencia de solicitud'] = get('intento');
   return fields;
 }
@@ -357,14 +357,14 @@ byId('continue').addEventListener('click', () => {
 byId('back-step').addEventListener('click', () => showStep(1, true));
 form.addEventListener('input', event => event.target.setCustomValidity?.(''));
 form.addEventListener('change', syncPayment);
-function submitToProvider(fields, file) {
+function submitToProvider(fields, file, endpointId) {
   // El POST nativo permite adjuntar el binario y completar la confirmación del proveedor en el navegador.
   const outgoing = document.createElement('form');
   outgoing.className = 'provider-post';
   outgoing.hidden = true;
   outgoing.method = 'POST';
   outgoing.enctype = 'multipart/form-data';
-  outgoing.action = 'https://formsubmit.co/' + formId;
+  outgoing.action = 'https://formsubmit.co/' + endpointId;
   for (const [key,value] of Object.entries(fields)) {
     const input = document.createElement('input');
     input.type = 'hidden'; input.name = key; input.value = value;
@@ -391,16 +391,16 @@ window.addEventListener('pageshow', event => {
     renderInquiry();
   }
 });
-async function deliver(data) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 37000);
-  try {
-    const response = await fetch(preview ? new URL('/consulta', document.body.dataset.formUrl) : '/consulta', {method:'POST',body:data,headers:{Accept:'application/json'},signal:controller.signal});
-    const result = await response.json().catch(() => null);
-    if (result?.status === 'activation_pending') return 'activation';
-    if (response.ok && result?.status === 'accepted') return 'accepted';
-    throw new Error(result?.message || 'FormSubmit no confirmó el envío. Conservamos los datos de esta solicitud.');
-  } finally { clearTimeout(timeout); }
+async function submissionId() {
+  if (formId) return formId;
+  if (preview) {
+    const response = await fetch(new URL('/api/formulario', document.body.dataset.formUrl));
+    if (response.ok) {
+      const config = await response.json();
+      if (/^[a-zA-Z0-9_-]{12,120}$/.test(config.id || '')) return config.id;
+    }
+  }
+  throw new Error('El formulario aún no está habilitado para envíos. Puedes completar tu solicitud por WhatsApp.');
 }
 form.addEventListener('submit', async event => {
   event.preventDefault();
@@ -424,24 +424,18 @@ form.addEventListener('submit', async event => {
   entry.phase = 'sending';
   renderInquiry();
   try {
-    // En el HTML descargable y en los envíos con imagen usamos el formulario oficial de FormSubmit.
-    if (formId) {
-      const fields = providerFields(data, programs.get(id).dataset.title);
-      const image = proof?.size ? await checkedProof(proof) : null;
-      const outgoing = submitToProvider(fields, image);
-      setTimeout(() => {
-        outgoing.remove();
-        if (entry.phase !== 'sending') return;
-        entry.phase = 'error';
-        entry.error = 'Falta la confirmación de FormSubmit. Consulta con admisiones antes de reenviar tu solicitud.';
-        if (activeProgram === id && dialog.open) renderInquiry();
-      }, 45000);
-      return;
-    }
-    entry.phase = await deliver(data);
-    if (entry.phase === 'activation') {
-      entry.error = 'FormSubmit solicitó verificar esta dirección de formulario. Puedes avisar a admisiones por WhatsApp.';
-    }
+    const endpointId = await submissionId();
+    const fields = providerFields(data, programs.get(id).dataset.title);
+    const image = proof?.size ? await checkedProof(proof) : null;
+    const outgoing = submitToProvider(fields, image, endpointId);
+    setTimeout(() => {
+      outgoing.remove();
+      if (entry.phase !== 'sending') return;
+      entry.phase = 'error';
+      entry.error = 'Falta la confirmación de FormSubmit. Consulta con admisiones antes de reenviar tu solicitud.';
+      if (activeProgram === id && dialog.open) renderInquiry();
+    }, 45000);
+    return;
   } catch (error) {
     entry.phase = 'error';
     entry.error = error.name === 'AbortError' ? 'La confirmación tardó en llegar. Consulta con admisiones antes de reenviar.'
