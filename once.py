@@ -1,6 +1,8 @@
 """Asistencia sobre el catálogo público de diplomados."""
 import json
 import os
+import socket
+import ssl
 from collections import OrderedDict
 from pathlib import Path
 from threading import Lock
@@ -9,7 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 from catalogo_vista import PROGRAMAS
 
 once = Blueprint("once", __name__)
@@ -83,7 +85,7 @@ def responder():
     req = Request("https://generativelanguage.googleapis.com/v1beta/models/" + quote(model, safe="") + ":generateContent",
                   data=json.dumps(body).encode(), headers={"Content-Type":"application/json", "x-goog-api-key":key})
     try:
-        with urlopen(req, timeout=15) as res:
+        with urlopen(req, timeout=40) as res:
             parts = json.load(res)["candidates"][0]["content"]["parts"]
         parsed = json.loads("".join(p.get("text", "") for p in parts if not p.get("thought")))
         answer = parsed["respuesta"]
@@ -103,7 +105,19 @@ def responder():
                       404: "Google no encontró el modelo configurado.", 429: "Se alcanzó un límite de uso de Gemini.",
                       400: "Google rechazó la solicitud o su configuración."}.get(exc.code, "Google devolvió un error de servicio.")
         return jsonify(modo="guia", error=f"{motivo} (HTTP {exc.code})"), 503
-    except (URLError, OSError):
-        return jsonify(modo="guia", error="El servidor no logró conectarse a Gemini a tiempo."), 503
+    except (URLError, OSError) as exc:
+        cause = exc.reason if isinstance(exc, URLError) else exc
+        if isinstance(cause, TimeoutError):
+            issue = "Gemini tardó más de 40 segundos en responder."
+        elif isinstance(cause, ssl.SSLError):
+            issue = "Falló la conexión segura del servidor con Gemini (TLS)."
+        elif isinstance(cause, socket.gaierror):
+            issue = "El servidor no pudo localizar a Gemini (DNS)."
+        else:
+            issue = "Se interrumpió la conexión del servidor con Gemini."
+        current_app.logger.warning("ONCE Gemini network: type=%s errno=%s tls_code=%s",
+                                   type(cause).__name__, getattr(cause, "errno", None),
+                                   getattr(cause, "verify_code", None))
+        return jsonify(modo="guia", error=issue), 503
     except (KeyError, IndexError, ValueError, TypeError, AttributeError):
         return jsonify(modo="guia", error="Gemini devolvió una respuesta que ONCE no pudo leer."), 503

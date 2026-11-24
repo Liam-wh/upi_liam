@@ -148,7 +148,7 @@
     try {
       if(useGemini) {
         const controller=new AbortController();
-        const timer=setTimeout(()=>controller.abort(),19000);
+        const timer=setTimeout(()=>controller.abort(),50000);
         try {
           const r=await fetch('/api/once',{method:'POST',headers:{'Content-Type':'application/json'},
             body:JSON.stringify({contexto:Number(select.value)||lastId,mensajes:[...history.slice(-6),{rol:'user',texto:q}]}),
