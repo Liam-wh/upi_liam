@@ -248,6 +248,28 @@ function providerFields(data, programTitle) {
   if (data.get('intento')) fields['Referencia de solicitud'] = get('intento');
   return fields;
 }
+function imagenSinComprobante(fecha, pagoDeclarado) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 760;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#173b40';
+  ctx.font = '22px sans-serif';
+  ctx.fillText('UPI · Admisiones | Registro interno', 32, 48);
+  ctx.font = 'bold 39px sans-serif';
+  ctx.fillText(pagoDeclarado ? 'SIN PAGO ACREDITADO' : 'SIN PAGO', 32, 118);
+  ctx.font = '25px sans-serif';
+  ctx.fillText(pagoDeclarado ? 'Monto acreditado: Bs 0,00' : 'Monto pagado: Bs 0,00', 32, 175);
+  ctx.fillText('Fecha de registro (Bolivia): ' + fecha, 32, 220);
+  ctx.font = '19px sans-serif';
+  ctx.fillText('Inscripción sin comprobante adjunto.', 32, 266);
+  return new Promise((resolve, reject) => canvas.toBlob(blob => {
+    if (blob) resolve(new File([blob], 'sin-pago-' + fecha + '.png', {type: 'image/png'}));
+    else reject(new Error('No se pudo generar el registro sin pago. Intenta de nuevo.'));
+  }, 'image/png'));
+}
 function renderProof() {
   const file = field('attachment').files[0];
   const image = byId('proof-thumb');
@@ -475,12 +497,17 @@ form.addEventListener('submit', async event => {
     const image = proof?.size ? await checkedProof(proof) : null;
     if (image) {
       await submitAttachment(fields, image, endpointId);
+    } else if (String(data.get('comprobante') || '').trim()) {
+      await submitText(fields, endpointId);
     } else {
-      const delivery = submitText(fields, endpointId);
-      if (!String(data.get('comprobante') || '').trim()) {
-        entry.phase = 'dispatched';
-        if (activeProgram === id && dialog.open) renderInquiry();
-      }
+      const fecha = fields['Fecha de solicitud de inscripción (Bolivia)'];
+      const pagoDeclarado = data.get('pago') === 'realizado';
+      const registro = await imagenSinComprobante(fecha, pagoDeclarado);
+      fields[pagoDeclarado ? 'Monto acreditado (Bs)' : 'Monto pagado (Bs)'] = '0.00';
+      fields['Adjunto interno'] = registro.name;
+      const delivery = submitAttachment(fields, registro, endpointId);
+      entry.phase = 'dispatched';
+      if (activeProgram === id && dialog.open) renderInquiry();
       await delivery;
     }
     entry.phase = 'accepted';
