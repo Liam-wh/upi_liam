@@ -372,21 +372,24 @@ input:focus, textarea:focus { outline: 1px solid var(--mint); outline-offset: 0;
   .filters button { flex: none; font-size: .78rem; }
   .results-bar { width: 100%; justify-content: space-between; }
   .grid { gap: .65rem; }
-  .grid.shelf { grid-auto-columns: 86%; }
-  .cover { aspect-ratio: 2.35; }
-  .area-tag { left: .35rem; bottom: .35rem; max-width: calc(100% - .7rem); gap: .25rem; padding: .15rem .33rem; font-size: .69rem; line-height: 1.2; }
+  .grid.shelf { grid-auto-columns: 100%; align-items: start; }
+  .course { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .course .cover { aspect-ratio: auto; border-radius: 7px 0 0 7px; border-bottom: 0; }
+  .course .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .area-tag { left: .35rem; top: .35rem; bottom: auto; max-width: calc(100% - .7rem); gap: .25rem; padding: .15rem .33rem; font-size: .69rem; line-height: 1.2; }
   .area-tag i { flex: none; }
   .course-body { padding: .65rem; }
   .course-meta { gap: .25rem; font-size: .73rem; }
   .course-meta > span:first-child, .course-meta i { display: none; }
   .course h3 { margin: .4rem 0; font-size: clamp(1rem, 3.8vw, 1.25rem); line-height: 1.16; overflow-wrap: anywhere; }
-  .course-body p { font-size: .825rem; line-height: 1.42; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+  .course-body p { font-size: .825rem; line-height: 1.42; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .card-actions { display: grid; gap: .2rem; padding-top: .6rem; }
   .card-actions .button { min-height: 44px; padding: .35rem; gap: .3rem; font-size: .8rem; }
+  .card-actions .syllabus { position: absolute; bottom: .45rem; left: .45rem; max-width: calc(50% - .9rem); padding-inline: .65rem; background: #10191ef2; color: white; border-color: #a2b8ba; }
   .plan-panel { padding: 1rem; gap: 1rem; }
   .plan-intro p:not(.kicker) { font-size: .93rem; }
 }
-@media (min-width: 360px) and (max-width: 767px) {
+@media (min-width: 640px) and (max-width: 767px) {
   .grid:not(.shelf) { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .grid.shelf { grid-auto-columns: calc((100% - .65rem) / 2); }
 }
