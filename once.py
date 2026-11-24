@@ -6,7 +6,7 @@ import ssl
 from collections import OrderedDict
 from pathlib import Path
 from threading import Lock
-from time import monotonic
+from time import monotonic, sleep
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -24,7 +24,7 @@ Alumni: beca de formación para alumnos seleccionados; la sede confirma elegibil
 Registro: elegir el diplomado, pulsar Me interesa, indicar nombre, CI y correo en el formulario, elegir perfil y certificado. Si ya pagó, fecha, monto y foto (JPG, PNG o WebP, hasta 4 MB) y/o enlace. Enviar solicitud la remite por FormSubmit a admisiones. La sede verifica el pago y habilita Moodle.
 El botón «QR de pago» está en Plan Alumni y en Certificación y pago. El QR original corresponde a titulaciones. Se puede descargar. Después del pago, pulsa «Enviar comprobante por WhatsApp» y adjunta la imagen en el chat de admisiones. Para otros cobros o sedes, pedir confirmación a la sede. Nunca generes cuentas, QR ni enlaces de pago.
 No recibes pagos ni tramitas inscripciones dentro del chat. No pidas datos personales ni comprobantes aquí. No inventes fechas, docentes, módulos o descuentos; remite al temario o admisiones si faltan datos.
-En un máximo de 130 palabras, responde la pregunta. Si recomiendas un diplomado concreto, indica su ID; si no, usa 0. Para ofrecer el QR, el catálogo o la inscripción elige la acción apropiada. No incluyas URLs en el texto; el sitio añadirá los enlaces desde el catálogo.
+Responde normalmente en dos o tres frases breves. Si la pregunta tiene varias partes, usa hasta tres puntos cortos y un máximo de 90 palabras. Si recomiendas un diplomado concreto, indica su ID; si no, usa 0. Para ofrecer el QR, el catálogo o la inscripción elige la acción apropiada. No incluyas URLs en el texto; el sitio añadirá los enlaces desde el catálogo.
 Diplomados y contenido confirmado:
 """ + CATALOGO
 
@@ -85,7 +85,19 @@ def responder():
     req = Request("https://generativelanguage.googleapis.com/v1beta/models/" + quote(model, safe="") + ":generateContent",
                   data=json.dumps(body).encode(), headers={"Content-Type":"application/json", "x-goog-api-key":key})
     try:
-        with urlopen(req, timeout=40) as res:
+        deadline = monotonic() + 40
+        try:
+            response = urlopen(req, timeout=40)
+        except HTTPError as temporary:
+            # Reservar tiempo para un único segundo intento dentro de la misma consulta.
+            backoff = (temporary.headers or {}).get("Retry-After", "1")
+            delay = max(1, int(backoff)) if backoff.isascii() and backoff.isdigit() and len(backoff) < 6 else None
+            if temporary.code not in (502, 503, 504) or delay is None or deadline - monotonic() - delay < 8:
+                raise
+            temporary.close()
+            sleep(delay)
+            response = urlopen(req, timeout=max(1, deadline - monotonic()))
+        with response as res:
             parts = json.load(res)["candidates"][0]["content"]["parts"]
         parsed = json.loads("".join(p.get("text", "") for p in parts if not p.get("thought")))
         answer = parsed["respuesta"]
