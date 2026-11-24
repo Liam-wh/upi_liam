@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Activar correo de admisiones · UPI Alumni</title>
+  <link rel="icon" href="/media/upi.png"><link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap nav-inner"><a class="brand" href="/"><img class="official-logo" src="/media/upi.png" alt="UPI"><span class="wordmark">Alumni</span></a></div></header>
+  <main class="wrap activation">
+    <p class="kicker">Administración del formulario</p>
+    <h1>Activar correo de admisiones</h1>
+    <p>Envía una solicitud de activación desde esta dirección web. Revisa la bandeja de entrada y Spam de <strong>{{ destinatario }}</strong> y pulsa «Activate Form» en el correo de FormSubmit.</p>
+    <form method="post" action="https://formsubmit.co/{{ destinatario }}">
+      <input type="hidden" name="_subject" value="Activación del formulario de inscripción UPI Alumni">
+      <input type="hidden" name="_url" value="{{ origen }}">
+      <input type="hidden" name="Motivo" value="Activación solicitada por la administración de UPI Alumni. Prueba técnica sin datos de participantes.">
+      <button class="button primary" type="submit">Solicitar activación</button>
+    </form>
+    <a class="button secondary" href="/">Volver al catálogo</a>
+  </main>
+</body>
+</html>

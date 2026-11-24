@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "title": "Diplomado en Automatización y Creación de Agentes Digitales para Marketing",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/1uZ6fkbR8Gc54MADnewV54YMKnQURlGUN/view?usp=sharing"
+  },
+  {
+    "id": 2,
+    "title": "Diplomado en Diseño de Microcredenciales y Educación Digital",
+    "area": "Educación",
+    "brochure": "https://drive.google.com/file/d/1k8KJjiE3kEAGacexmJAM-wEbug2sxNOp/view?usp=sharing"
+  },
+  {
+    "id": 3,
+    "title": "Diplomado en Gerencia y Dirección de Establecimientos de Salud",
+    "area": "Salud",
+    "brochure": "https://drive.google.com/file/d/1Khr9FEN-7Wojs6UIF3lDJdmFbB974PLE/view?usp=sharing"
+  },
+  {
+    "id": 4,
+    "title": "Diplomado en Seguridad de la Información y Ciberseguridad de Datos",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/1pBoEBL5Dic7BURx_Ze8E27poNflF4ZzQ/view?usp=drive_link"
+  },
+  {
+    "id": 5,
+    "title": "Diplomado en Energías Renovables, Eficiencia Energética e Inteligencia Artificial Aplicada",
+    "area": "Medioambiente",
+    "brochure": "https://drive.google.com/file/d/1VuxsfcOcZ8X-nfleRLzkdEyJAG2dLYgt/view?usp=drive_link"
+  },
+  {
+    "id": 6,
+    "title": "Diplomado en Automatización y Creación de Agentes Digitales para el Área Legal",
+    "area": "Derecho",
+    "brochure": "https://drive.google.com/file/d/19PqDoFXK0qtq0fBj0KTRA3Zh-j5vtmtF/view?usp=sharing"
+  },
+  {
+    "id": 7,
+    "title": "Diplomado en Automatización y Creación de Agentes Digitales para Gestión Contable y Auditoría",
+    "area": "Finanzas",
+    "brochure": "https://drive.google.com/file/d/1Ppu0W1YeXZju2jEfbz25ZzpFVBniWzma/view?usp=sharing"
+  },
+  {
+    "id": 8,
+    "title": "Curso Medios de Cobro y Pago Nacionales e Internacionales",
+    "area": "Finanzas",
+    "brochure": "https://drive.google.com/file/d/1aWXrOqR3UGKKJ9WEO5F8fGEh_g_a-NJu/view?usp=sharing"
+  },
+  {
+    "id": 9,
+    "title": "Curso Marco Legislativo del Entorno Digital",
+    "area": "Derecho",
+    "brochure": "https://drive.google.com/file/d/1y-Jw4z_ax4B_PuZkEgXHbLZOYkmgpfLM/view?usp=sharing"
+  },
+  {
+    "id": 10,
+    "title": "Diplomado en Derecho Notarial, Registral y Gestión Documental Digital",
+    "area": "Derecho",
+    "brochure": "https://drive.google.com/file/d/1AkU0cl15z-QqOyR0KsdxGKgiu15q4xVs/view?usp=sharing"
+  },
+  {
+    "id": 11,
+    "title": "Diplomado en Secretariado Ejecutivo, Asistencia Gerencial e Inteligencia Artificial",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1zXZCg-hlXMOR-iyYpfErzuralwDRC1hZ/view?usp=sharing"
+  },
+  {
+    "id": 12,
+    "title": "Diplomado en Investigación de Mercados, Analítica y Diseño de Encuestas",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1UMsqbvz9Cdw9BfOdaY4rbH_HDxcaigW8/view?usp=sharing"
+  },
+  {
+    "id": 13,
+    "title": "Curso en Comunicación Oral, Escrita e Imagen Profesional",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1RhLtL1UPRhWplwfMVFM837Xtm7P1e9Ae/view?usp=sharing"
+  },
+  {
+    "id": 14,
+    "title": "Diplomado en Transformación Digital, Inteligencia Artificial y Mentalidad Digital",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/1QSRY21F_G8RGYgyjbIFdAhAT3GPRUhwb/view?usp=sharing"
+  },
+  {
+    "id": 15,
+    "title": "Diplomado en Gerencia Estratégica, Gestión Administrativa y Finanzas Empresariales",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1Fsv3bg-oe0Lsj3Jmm9mgkskVjF3w5P6L/view?usp=sharing"
+  },
+  {
+    "id": 16,
+    "title": "Curso Análisis y Diseños de Inversión en Mercados Financieros",
+    "area": "Finanzas",
+    "brochure": "https://drive.google.com/file/d/1HT4Yy_VYwozDQSO0U9Mrqc0QbiGKImFc/view?usp=sharing"
+  },
+  {
+    "id": 17,
+    "title": "Curso en Medicina Regenerativa y Sueroterapia",
+    "area": "Salud",
+    "brochure": "https://drive.google.com/file/d/1XgcrNBTp7SF3Xw8QT__yIm-h0uHkUzNk/view?usp=sharing"
+  },
+  {
+    "id": 18,
+    "title": "Diplomado en Metodologías Ágiles",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1MgQGdeOLxeLSyh8sMa0EiOEOrQmslHm4/view?usp=drive_link"
+  },
+  {
+    "id": 19,
+    "title": "Diplomado en Liderazgo y Habilidades Directivas",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1c2LGS6nHjLgqRbgViTGhgpzgDO3pGE9j/view?usp=drive_link"
+  },
+  {
+    "id": 20,
+    "title": "Diplomado en Marketing Digital y E-Commerce",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1TyFvT4KPnM-wnLcf_M-1nxKxhPf2lPj2/view?usp=drive_link"
+  },
+  {
+    "id": 21,
+    "title": "Diplomado en Inteligencia Artificial para Entornos Laborales",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/1t1XUCjFEoac7TzfAAsKLIuxnTiXPCkPh/view?usp=drive_link"
+  },
+  {
+    "id": 22,
+    "title": "Diplomado en Comunicación Efectiva y Negociación",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1efzPHESQw2_eHxUc7J2h-zAxwLbnROpj/view?usp=drive_link"
+  },
+  {
+    "id": 23,
+    "title": "Curso Ofimática Profesional",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/10nQ2Rbr2HSa0isjevFCSh93vAmbDGHZW/view?usp=drive_link"
+  },
+  {
+    "id": 24,
+    "title": "Curso en Fundamentos de Sistemas de Gestión de Calidad ISO 9001:2015",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/12drDhSivsJo0MUgkHsndWZnxRCtZes_u/view?usp=drive_link"
+  },
+  {
+    "id": 25,
+    "title": "Curso en Ventas Efectivas y Estrategias Comerciales",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1XBy7ezaAg11NZWpHMaHL_r7WwvUdA36N/view?usp=drive_link"
+  },
+  {
+    "id": 26,
+    "title": "Diplomado en Ciberseguridad Empresarial",
+    "area": "Tecnología e IA",
+    "brochure": "https://drive.google.com/file/d/15ZSTGKxQ0AHLzXSjbRV-oZBeKrR7EyOs/view?usp=drive_link"
+  },
+  {
+    "id": 27,
+    "title": "Diplomado en Automatización y Creación de Agentes Digitales para la Dirección Estratégica y Optimización Empresarial",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1yt0ot3ampkEEezKneg2ePcAq7YLulldd/view?usp=sharing"
+  },
+  {
+    "id": 28,
+    "title": "Diplomado en Innovación Estratégica y Gestión del Cambio",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/14ETIaOPXCiEhXQROWv_u_3189KSSU46a/view?usp=sharing"
+  },
+  {
+    "id": 29,
+    "title": "Curso Investigación de Mercados y Gestión de la Información",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1g1D7vSiAshKYax38mNiOVKAsUU0aP3nd/view?usp=sharing"
+  },
+  {
+    "id": 30,
+    "title": "Curso Productos Bancarios de Activo",
+    "area": "Finanzas",
+    "brochure": "https://drive.google.com/file/d/1V6NKyPF4ST_SAVPgMo8J-HjnsRSHZQqP/view?usp=drive_link"
+  },
+  {
+    "id": 31,
+    "title": "Diplomado en Gestión Inteligente de Sistemas de Riego y Agricultura Sostenible",
+    "area": "Medioambiente",
+    "brochure": "https://drive.google.com/file/d/1fKXtptxGy-OUVrIwCOx7L3eN4NsbN8n2/view?usp=drive_link"
+  },
+  {
+    "id": 32,
+    "title": "Curso en Atención al Cliente y Fidelización Estratégica",
+    "area": "Marketing y comunicación",
+    "brochure": "https://drive.google.com/file/d/1SPbQ8cncM0VlrF-pB5AY5_T0RRQ6HypH/view?usp=drive_link"
+  },
+  {
+    "id": 33,
+    "title": "Diplomado en Cambio Climático y Gobernanza Ambiental",
+    "area": "Medioambiente",
+    "brochure": "https://drive.google.com/file/d/1R0FGKfn_sLkKcfbgXF8mWP9ngNHqKe3j/view?usp=drive_link"
+  },
+  {
+    "id": 34,
+    "title": "Curso Gestión Integrada de los Sistemas de Prevención y Calidad en la Empresa",
+    "area": "Gestión empresarial",
+    "brochure": "https://drive.google.com/file/d/1qyJ_lykCPrGF7iOgY1uOjwDJN90T_VGs/view?usp=drive_link"
+  },
+  {
+    "id": 35,
+    "title": "Curso Economía Gerencial",
+    "area": "Finanzas",
+    "brochure": "https://drive.google.com/file/d/1-27LXab9MnrJhhirMsymdPG08ncpQZVk/view?usp=drive_link"
+  }
+]

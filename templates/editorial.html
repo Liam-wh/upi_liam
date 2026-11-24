@@ -1,0 +1,229 @@
+{% macro ico(name, extra='') -%}<svg class="icon {{ extra }}" focusable="false" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{%- endmacro %}
+{% macro brand() -%}<img class="official-logo" src="/media/upi.png" alt="UPI · Universidad Politécnica Internacional" width="56" height="56"><span class="wordmark"><span class="slash">/</span><span>Alumni</span></span>{%- endmacro %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1015">
+  <meta name="description" content="Conoce los diplomados autogestionados del Plan Alumni UPI. Explora por área y recibe orientación sobre tu inscripción.">
+  <title>UPI Alumni · Diplomados</title>
+  <link rel="icon" type="image/png" href="/media/upi.png">
+  <link rel="stylesheet" href="/estilo.css">
+</head>
+<body id="inicio" data-preview="{{ 'true' if muestra else 'false' }}" data-full="{{ 'true' if completo else 'false' }}" data-phone="{{ telefono }}" data-recipient="{{ destinatario }}" data-form-url="{{ form_url }}" data-gemini="{{ 'true' if gemini_activo else 'false' }}">
+  {% include 'iconos.html' %}
+  <div class="opening" aria-hidden="true">
+    <div class="opening-brand">{{ brand() }}</div><span class="opening-track"></span>
+  </div>
+  <a class="skip" href="#catalogo">Saltar al catálogo</a>
+  <header class="topbar">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#inicio" aria-label="UPI Alumni, inicio">{{ brand() }}</a>
+      <button class="icon-btn menu-toggle" id="menu" aria-controls="navegacion" aria-expanded="false" aria-label="Abrir menú">{{ ico('menu') }}</button>
+      <nav id="navegacion" aria-label="Principal">
+        <a href="#catalogo">Diplomados</a><a href="#beca">Plan Alumni</a>
+        <a class="button nav-contact" href="https://wa.me/{{ telefono }}" target="_blank" rel="noopener">{{ ico('chat') }} WhatsApp</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="lema">
+      <div class="hero-art" aria-hidden="true">
+        {% for p, imagen in slides %}
+        <div class="hero-shot shot-{{ imagen }}{% if loop.first %} is-current{% endif %}" data-slide="{{ p.id }}">
+          <img src="/media/{{ imagen }}.webp" alt="" decoding="async" {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="wrap hero-inner">
+        <div class="hero-copy">
+          <p class="kicker light-rule">Formación continua · UPI Panamá</p>
+          <h1 id="lema">El conocimiento<br><span>abre caminos.</span></h1>
+          <p class="hero-text">Elige un diplomado que conecte con tu trabajo. Estudia en línea, a tu ritmo.</p>
+          <a class="button primary hero-cta" href="#catalogo">{{ ico('grid') }} Explorar catálogo</a>
+        </div>
+        <div class="feature" role="region" aria-roledescription="carrusel" aria-label="Programas de portada">
+          <div class="feature-copy">
+            <span class="feature-label">Diplomado en portada</span>
+            <button class="feature-name" data-open="{{ slides[0][0].id }}" id="feature-name" title="Consultar por este programa">{{ slides[0][0].nombre }}</button>
+          </div>
+          <div class="slide-controls">
+            <button class="slide-btn" id="slide-prev" aria-label="Programa anterior">{{ ico('prev') }}</button>
+            <span class="slide-no" aria-hidden="true"><b id="slide-number">01</b> / 03</span>
+            <button class="slide-btn" id="slide-next" aria-label="Programa siguiente">{{ ico('next') }}</button>
+          </div>
+          <span class="sr-only" role="status" id="slide-status"></span>
+        </div>
+      </div>
+    </section>
+    <section class="catalog wrap" id="catalogo" aria-labelledby="catalog-title">
+      <div class="catalog-head">
+        <div><p class="kicker light-rule">Catálogo académico</p><h2 id="catalog-title">Encuentra tu diplomado.</h2></div>
+        <a class="button secondary scope-link" id="scope-link" href="{{ ('?vista=seleccion' if completo else '?vista=completa') if muestra else ('/' if completo else '/todos') }}#catalogo">
+          {{ ico('stack') }}<span>{{ 'Ver selección' if completo else 'Ver los ' ~ programas|length ~ ' diplomados' }}</span>
+        </a>
+      </div>
+      <div class="catalog-tools">
+        {% for scope, options in [('seleccion', areas_portada), ('completo', areas)] %}
+        <div class="filters" data-filters="{{ scope }}" role="group" aria-label="Filtrar por área" {% if (scope == 'completo') != completo %}hidden{% endif %}>
+          <button type="button" data-filter="" aria-pressed="true">Todos</button>
+          {% for a in options %}<button type="button" data-filter="{{ a }}" aria-pressed="false">{{ a }}</button>{% endfor %}
+        </div>
+        {% endfor %}
+        <div class="results-bar">
+          <div class="catalog-count" id="count" role="status">{{ (programas if completo else destacados)|length }} diplomados</div>
+          <div class="shelf-controls" id="shelf-controls" {% if not completo %}hidden{% endif %}>
+            <button class="icon-btn" id="shelf-prev" aria-label="Ver programas anteriores" aria-controls="programas">{{ ico('prev') }}</button>
+            <button class="icon-btn" id="shelf-next" aria-label="Ver programas siguientes" aria-controls="programas">{{ ico('next') }}</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid" id="programas">
+        {% for p in programas %}
+        <article class="course tone-{{ p.tono }}" data-program="{{ p.id }}" data-title="{{ p.title }}" data-area="{{ p.area }}" data-selection="{{ p.seleccion }}" {% if not completo and not p.seleccion %}hidden{% endif %}>
+          <div class="cover">
+            <img src="/media/{{ p.imagen }}.webp" alt="" loading="lazy" decoding="async">
+            <span class="area-tag"><i aria-hidden="true"></i><span>{{ p.area if completo else p.seleccion }}</span></span>
+          </div>
+          <div class="course-body">
+            <div class="course-meta"><span>{{ p.tipo }}</span><i aria-hidden="true"></i>{{ ico('clock') }}<span>{{ p.horas }} h académicas</span></div>
+            <h3>{{ p.nombre }}</h3>
+            <p>{{ p.descripcion or temas[p.id|string].resumen }}</p>
+            <div class="card-actions">
+              <button type="button" class="button course-cta" data-open="{{ p.id }}" aria-label="Me interesa {{ p.nombre }}">{{ ico('mail') }} Me interesa</button>
+              <a class="button syllabus" href="{{ temas[p.id|string].fuente }}" target="_blank" rel="noopener" aria-label="Ver temario de {{ p.nombre }}">{{ ico('book') }} Ver temario</a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="plan wrap" id="beca" aria-labelledby="plan-title">
+      <div class="plan-panel">
+        <div class="plan-intro">
+          <p class="kicker light-rule">Plan Alumni 2026</p>
+          <h2 id="plan-title">¿Ya estudiaste<br>con nosotros?</h2>
+          <p>Los alumnos seleccionados reciben una beca del <strong>100% sobre la formación del diplomado</strong>. Tú eliges la certificación.</p>
+          <a class="button secondary" href="https://wa.me/{{ telefono }}?text=Hola%2C%20quisiera%20saber%20si%20aplico%20al%20Plan%20Alumni." target="_blank" rel="noopener">{{ ico('chat') }} Consultar si aplico</a>
+        </div>
+        <div class="plan-prices">
+          <div class="price"><span class="price-icon">{{ ico('screen') }}</span><div><strong>Certificado digital</strong><small>Sin apostilla</small></div><b>Bs 550</b></div>
+          <div class="price"><span class="price-icon">{{ ico('award') }}</span><div><strong>Certificado físico</strong><small>Con apostilla</small></div><b>Bs 700</b></div>
+          <button class="button secondary qr-launch" type="button" data-show-qr>{{ ico('grid') }} QR de pago</button>
+          <details><summary>Fechas y condiciones {{ ico('next') }}</summary><p>Inscripción del 1 de noviembre al 31 de diciembre de 2026. La certificación se paga por adelantado. Desde tu acceso a Moodle tienes 90 días para completar y aprobar el diplomado. Si vence el plazo, se pierde la certificación y el pago.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="wrap footer-inner"><span>© 2026 · Universidad Politécnica Internacional</span><a href="#inicio">{{ ico('up') }} Volver al inicio</a></div></footer>
+
+  <dialog id="consulta" aria-labelledby="dialog-title">
+    <div class="dialog-head">
+      <p class="kicker">Admisiones · UPI Alumni</p>
+      <button id="close" class="icon-btn close" aria-label="Cerrar consulta">{{ ico('close') }}</button>
+      <h2 id="dialog-title">Solicita tu inscripción</h2>
+    </div>
+    <div class="dialog-content">
+      <div class="chosen"><span class="chosen-icon">{{ ico('book') }}</span><p id="chosen-title"></p></div>
+      <div id="compose">
+        <a class="button wa-button" id="wa" href="https://wa.me/{{ telefono }}" target="_blank" rel="noopener">{{ ico('chat') }} Escribir por WhatsApp</a>
+        <div class="divider"><span>o completa tu solicitud</span></div>
+        <form id="lead" action="/consulta" method="post" enctype="multipart/form-data">
+          <fieldset id="fields">
+            <legend class="sr-only">Inscripción del participante</legend>
+            <input type="hidden" name="program">
+            <input type="hidden" name="website" autocomplete="off">
+            <section class="form-step" id="student-step" aria-labelledby="student-title">
+              <h3 class="step-title" id="student-title"><span>1 de 2</span> Datos del estudiante</h3>
+              <label>Nombre completo<input name="name" required maxlength="120" autocomplete="name" placeholder="Nombres y apellidos"></label>
+              <div class="field-pair">
+                <label>Cédula de identidad (CI)<input name="ci" required maxlength="40" placeholder="Número y complemento, si aplica"></label>
+                <label>Correo electrónico<input name="email" type="email" required maxlength="254" autocomplete="email" placeholder="tu@correo.com"></label>
+              </div>
+              <details class="staff-details"><summary>Sede o asesor <span>(si los conoces)</span></summary>
+                <div class="field-pair">
+                  <label>Sede de atención<input name="sede" maxlength="120"></label>
+                  <label>Persona que te atendió<input name="asesor" maxlength="120"></label>
+                </div>
+              </details>
+              <button class="button primary next-step" type="button" id="continue">Continuar</button>
+            </section>
+            <section class="form-step" id="payment-step" aria-labelledby="payment-title" hidden>
+              <h3 class="step-title" id="payment-title"><span>2 de 2</span> Certificación y pago</h3>
+              <label>Tipo de participante<select name="perfil" required><option value="">Selecciona tu perfil</option><option value="alumni">Plan Alumni</option><option value="externo">Nuevo o externo</option></select></label>
+              <label>Tipo de certificación<select name="certificacion" required><option value="">Selecciona una modalidad</option>{% for codigo, datos in certificados.items() %}<option value="{{ codigo }}" data-tarifa="{{ datos[1] }}">{{ datos[0] }}</option>{% endfor %}</select></label>
+              <p class="tarifa" id="tarifa" aria-live="polite" hidden></p>
+              <button class="button secondary" type="button" data-show-qr>{{ ico('grid') }} QR de pago</button>
+              <label>¿Ya realizaste un pago?<select name="pago" required><option value="pendiente">Aún no he pagado</option><option value="realizado">Sí, ya realicé el pago</option></select></label>
+              <div id="payment-data" hidden>
+                <div class="field-pair">
+                  <label>Fecha de pago<input type="date" name="fecha_pago"></label>
+                  <label>Monto que pagaste (Bs)<input type="number" inputmode="decimal" name="monto" min="0.01" max="999999999.99" step="0.01"></label>
+                </div>
+                <div class="upload-box">
+                  <label for="proof-file">Imagen del comprobante</label>
+                  <input id="proof-file" name="attachment" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="proof-spec">
+                  <p class="field-help" id="proof-spec">Foto o captura en JPG, PNG o WebP de hasta 4 MB.</p>
+                  <div id="proof-preview" hidden><img id="proof-thumb" alt="Vista previa del comprobante seleccionado"><button type="button" class="button secondary" id="remove-proof">Quitar imagen</button></div>
+                </div>
+                <label>Enlace al comprobante <span>(opcional)</span><input type="url" name="comprobante" maxlength="1500" placeholder="https://…" aria-describedby="proof-help"></label>
+                <p class="field-help" id="proof-help">Si el archivo es privado, da acceso a {{ destinatario }}.</p>
+              </div>
+              <label>Tu mensaje <span>(opcional)</span><textarea name="message" rows="2" maxlength="1500" placeholder="¿Hay algo más que debamos saber?"></textarea></label>
+              <p class="field-help" id="delivery-note">FormSubmit procesará esta solicitud para enviarla a {{ destinatario }} y conservará los datos durante 30 días.</p>
+              <button class="button secondary" type="button" id="back-step">Volver a mis datos</button>
+            </section>
+          </fieldset>
+          <div class="error-box" id="form-error" role="alert" hidden>{{ ico('alert') }}<span></span></div>
+          <button class="button primary submit" type="submit" id="submit" hidden>
+            <span class="submit-icon" aria-hidden="true">{{ ico('send', 'plane') }}<span class="spinner"></span></span>
+            <span id="submit-label">Enviar solicitud</span>
+            <span class="sending-line" aria-hidden="true"></span>
+          </button>
+        </form>
+      </div>
+      <div id="receipt" class="receipt" hidden>
+        <span class="receipt-seal" aria-hidden="true"><svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="24"/><path d="m17 28 7.5 7.5L39 21"/></svg></span>
+        <h3 id="receipt-heading" tabindex="-1"></h3>
+        <p id="receipt-text"></p>
+        <button class="button secondary" id="done">Volver al catálogo</button>
+      </div>
+      <p class="sr-only" role="status" aria-live="polite" id="form-status"></p>
+    </div>
+  </dialog>
+  <dialog class="qr-dialog" id="qr-dialog" aria-labelledby="qr-title">
+    <div class="dialog-head">
+      <button type="button" class="icon-btn close" id="qr-close" aria-label="Cerrar QR">{{ ico('close') }}</button>
+      <h2 id="qr-title">QR de pago</h2>
+    </div>
+    <div class="dialog-content">
+      <img id="qr-imagen" src="/media/qr-titulaciones.png" width="1600" height="1600" loading="lazy" alt="QR de Banco BISA para titulaciones, titular ESAM SRL.">
+      <p class="field-help">Después de realizar el pago, no se olvide de enviar el comprobante.</p>
+      <a class="button wa-button" id="qr-whatsapp" href="https://wa.me/{{ telefono }}?text=Hola%2C%20quiero%20enviar%20mi%20comprobante%20de%20pago." target="_blank" rel="noopener">{{ ico('chat') }} Enviar comprobante por WhatsApp</a>
+      <a class="button secondary" id="qr-download" href="{{ '#qr-imagen' if muestra else url_for('descargar_qr') }}" download="QR-Titulaciones-ESAM.png">Descargar QR</a>
+    </div>
+  </dialog>
+  <aside id="once-panel" aria-labelledby="once-title" hidden>
+    <div class="once-head"><div class="once-identity"><img id="once-face" width="46" height="46" alt=""><div><p class="kicker">Asistente de admisiones</p><h2 id="once-title">ONCE</h2></div></div>
+      <button class="icon-btn" id="once-close" aria-label="Cerrar chat">{{ ico('close') }}</button></div>
+    <label class="once-picker">Diplomado de interés<select id="once-program"><option value="">Consulta general</option>{% for p in programas %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select></label>
+    <div class="once-log" id="once-log" role="log" aria-live="polite" aria-relevant="additions">
+      <p class="once-bubble">Hola, soy ONCE. ¿Qué diplomado te interesa? También puedo guiarte con la inscripción y el pago.</p>
+    </div>
+    <div class="once-suggest" aria-label="Preguntas sugeridas">
+      <button id="once-discover">¿Qué diplomados hay?</button><button>¿Cómo me inscribo?</button><button>¿Cuánto cuesta?</button><button>¿Dónde está el QR?</button>
+    </div>
+    <form id="once-form"><label class="sr-only" for="once-input">Escribe tu pregunta</label>
+      <input id="once-input" autocomplete="off" maxlength="650" required placeholder="Escribe tu pregunta…">
+      <button class="button primary" type="submit" aria-label="Enviar pregunta">{{ ico('send') }}</button></form>
+    <p class="once-mode" id="once-mode">{{ 'Con Gemini' if gemini_activo else 'Guía del catálogo' }} · Comparte solo tu consulta académica.</p>
+  </aside>
+  <button type="button" id="once-toggle" aria-controls="once-panel" aria-expanded="false" aria-label="Abrir chat con ONCE">
+    <img src="/media/once.png" alt="" width="54" height="54"><span>ONCE<small>Asistente</small></span>
+  </button>
+  <script type="application/json" id="once-data">{{ temas|tojson }}</script>
+  <script src="/catalogo.js" defer></script>
+  <script src="/once.js" defer></script>
+</body>
+</html>
