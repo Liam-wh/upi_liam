@@ -248,27 +248,15 @@ function providerFields(data, programTitle) {
   if (data.get('intento')) fields['Referencia de solicitud'] = get('intento');
   return fields;
 }
-function imagenSinComprobante(fecha, pagoDeclarado) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 760;
-  canvas.height = 300;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#173b40';
-  ctx.font = '22px sans-serif';
-  ctx.fillText('UPI · Admisiones | Registro interno', 32, 48);
-  ctx.font = 'bold 39px sans-serif';
-  ctx.fillText(pagoDeclarado ? 'SIN PAGO ACREDITADO' : 'SIN PAGO', 32, 118);
-  ctx.font = '25px sans-serif';
-  ctx.fillText(pagoDeclarado ? 'Monto acreditado: Bs 0,00' : 'Monto pagado: Bs 0,00', 32, 175);
-  ctx.fillText('Fecha de registro (Bolivia): ' + fecha, 32, 220);
-  ctx.font = '19px sans-serif';
-  ctx.fillText('Inscripción sin comprobante adjunto.', 32, 266);
-  return new Promise((resolve, reject) => canvas.toBlob(blob => {
-    if (blob) resolve(new File([blob], 'sin-pago-' + fecha + '.png', {type: 'image/png'}));
-    else reject(new Error('No se pudo generar el registro sin pago. Intenta de nuevo.'));
-  }, 'image/png'));
+async function imagenSinComprobante() {
+  const respuesta = await fetch('/media/nopago.png');
+  if (!respuesta.ok) throw new Error('No se pudo cargar nopago.png. Intenta el envío nuevamente.');
+  const imagen = await respuesta.blob();
+  const cabecera = new Uint8Array(await imagen.slice(0, 8).arrayBuffer());
+  if (![137,80,78,71,13,10,26,10].every((byte, i) => cabecera[i] === byte)) {
+    throw new Error('El archivo nopago.png no está disponible. Consulta con admisiones.');
+  }
+  return new File([imagen], 'nopago.png', {type: 'image/png'});
 }
 function renderProof() {
   const file = field('attachment').files[0];
@@ -304,8 +292,7 @@ field('attachment').addEventListener('change', () => {
 });
 function renderInquiry() {
   const entry = inquiryFor(activeProgram);
-  const dispatched = entry.phase === 'dispatched';
-  const finished = dispatched || entry.phase === 'accepted';
+  const finished = entry.phase === 'accepted';
   const pending = entry.phase === 'sending';
   const failed = entry.phase === 'error' || entry.phase === 'activation';
   byId('compose').hidden = finished;
@@ -321,10 +308,8 @@ function renderInquiry() {
   byId('form-error').querySelector('span').textContent = failed ? entry.error : '';
   byId('form-status').textContent = pending ? 'Enviando solicitud…' : '';
   if (finished) {
-    byId('receipt-heading').textContent = dispatched ? 'Solicitud en trámite' : 'Enviado';
-    byId('receipt-text').textContent = dispatched
-      ? 'Ya iniciamos el envío. Puedes volver al catálogo.'
-      : 'Tu solicitud se envió a admisiones. Te responderemos a ' + entry.values.email + '.';
+    byId('receipt-heading').textContent = 'Enviado';
+    byId('receipt-text').textContent = 'Tu solicitud se envió a admisiones. Te responderemos a ' + entry.values.email + '.';
     byId('receipt-heading').focus({preventScroll: true});
   } else { showStep(entry.step); }
 }
@@ -500,15 +485,11 @@ form.addEventListener('submit', async event => {
     } else if (String(data.get('comprobante') || '').trim()) {
       await submitText(fields, endpointId);
     } else {
-      const fecha = fields['Fecha de solicitud de inscripción (Bolivia)'];
       const pagoDeclarado = data.get('pago') === 'realizado';
-      const registro = await imagenSinComprobante(fecha, pagoDeclarado);
+      const registro = await imagenSinComprobante();
       fields[pagoDeclarado ? 'Monto acreditado (Bs)' : 'Monto pagado (Bs)'] = '0.00';
       fields['Adjunto interno'] = registro.name;
-      const delivery = submitAttachment(fields, registro, endpointId);
-      entry.phase = 'dispatched';
-      if (activeProgram === id && dialog.open) renderInquiry();
-      await delivery;
+      await submitAttachment(fields, registro, endpointId);
     }
     entry.phase = 'accepted';
   } catch (error) {
